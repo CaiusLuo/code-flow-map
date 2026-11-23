@@ -1,0 +1,10 @@
+{
+  "name": "code-flow-map",
+  "version": "0.1.0",
+  "description": "An Agent Skill for building source-linked HTML walkthroughs",
+  "private": true,
+  "license": "MIT",
+  "pi": {
+    "skills": ["./skills/code-flow-map"]
+  }
+}
