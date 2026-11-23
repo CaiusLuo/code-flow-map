@@ -1,61 +1,69 @@
 # Code Flow Map
 
-![Code Flow Map 封面，左侧源码与右侧流程节点双向对应](docs/images/cover.png)
+**English** · [简体中文](README.zh-CN.md)
 
-给定一个仓库和一个想弄懂的流程，生成一页可交互的离线 HTML。左侧读源码，右侧看执行流程。点击流程节点跳到对应行，点击带圆点的行号可以回到节点。
+![Code Flow Map cover showing source code linked to execution nodes](docs/images/cover.png)
 
-[36 秒使用视频](https://github.com/CaiusLuo/code-flow-map/releases/download/v0.1.0/code-flow-map-demo.mp4) · [下载离线示例](https://github.com/CaiusLuo/code-flow-map/releases/download/v0.1.0/task-queue.html)
+Turn one repository workflow into an interactive, offline HTML walkthrough. Read the source on the left and follow the execution flow on the right. Select a node to jump to its source, or select a marked line number to jump back to the node.
 
-## 最小用法
+## Demo
 
-在要阅读的项目里启动 Agent，调用 `code-flow-map` 并说明想看的流程。例如：
+https://github.com/user-attachments/assets/fa17df5e-d21b-488a-b96a-a99b4205e0a4
 
-> 梳理当前仓库里任务从领取到完成的流程，带上失败重试。交付一个代码和流程图可以双向定位的离线 HTML。
+*36-second walkthrough with Chinese captions, from source navigation to replaying a retry path.*
 
-Agent 从真实入口读一条执行主线，补上能解释关键判断的分支，再核对每个节点对应的文件和行号。渲染器根据清单生成页面。Git 项目默认读取本地 HEAD，页面带有提交号。播放按源码中整理出的路径逐步定位。
+[Download the offline example](https://github.com/CaiusLuo/code-flow-map/releases/download/v0.1.0/task-queue.html)
 
-## 安装
+## Quick start
 
-下面几种安装方式共用同一个 [Skill 目录](skills/code-flow-map)。手动安装可以下载 [首版 Skill ZIP](https://github.com/CaiusLuo/code-flow-map/releases/download/v0.1.0/code-flow-map-skill-v0.1.0.zip)。生成 HTML 需要 Python 3.9 或更新版本。读取 Git 提交时需要 Git。
+Open the project you want to understand, invoke `code-flow-map` in your agent, and describe the workflow. For example, ask:
 
-### Codex 和 Claude Code
+> Trace how a job goes from claim to completion, including retry after failure. Give me an offline HTML page where I can jump between the flow and the source.
 
-在目标项目目录执行：
+The agent reads the entry point, follows the main path and its relevant branches, then checks the file and line range for each node. The renderer turns that map into one HTML file. For Git projects, the skill reads local HEAD by default and includes the commit in the output. Playback follows the paths mapped from the source.
+
+## Install
+
+Every agent uses the same [skill directory](skills/code-flow-map). For a manual install, download the [v0.1.0 skill ZIP](https://github.com/CaiusLuo/code-flow-map/releases/download/v0.1.0/code-flow-map-skill-v0.1.0.zip). Rendering requires Python 3.9 or newer. Reading a commit also requires Git.
+
+### Codex and Claude Code
+
+Run this in the target project:
 
 ```sh
 npx skills add CaiusLuo/code-flow-map --skill code-flow-map --agent codex claude-code
 ```
 
-在 Codex 输入 `$code-flow-map`，在 Claude Code 输入 `/code-flow-map`。如需手动安装，把完整的 `code-flow-map` 技能目录分别放到项目的 `.agents/skills/` 或 `.claude/skills/`。 [Codex 技能文档](https://learn.chatgpt.com/docs/build-skills) · [Claude Code 技能文档](https://code.claude.com/docs/en/skills)
+Invoke `$code-flow-map` in Codex or `/code-flow-map` in Claude Code. For a manual install, put the full `code-flow-map` directory under the project's `.agents/skills/` for Codex or `.claude/skills/` for Claude Code. [Codex skills](https://learn.chatgpt.com/docs/build-skills) · [Claude Code skills](https://code.claude.com/docs/en/skills)
 
 ### DeepSeek Harness
 
-把完整的 `code-flow-map` 技能目录放到项目根目录的 `.agents/skills/` 或 `.dsh/skills/`，然后输入 `/code-flow-map`。如果已在同一项目为 Codex 安装到 `.agents/skills/`，可以直接复用。 [Harness 技能文档](https://github.com/deepseek-ai/deepseek-harness/blob/master/docs/subsystems/skills.md)
+Put the full `code-flow-map` directory under `.agents/skills/` or `.dsh/skills/` at the project root, then invoke `/code-flow-map`. Harness can reuse the same project-level `.agents/skills/` installation as Codex. [Harness skills](https://github.com/deepseek-ai/deepseek-harness/blob/master/docs/subsystems/skills.md)
 
 ### Pi
 
-用 Pi 的 Git 包安装，固定到首版。安装后在 Pi 输入 `/skill:code-flow-map`。
+Install the Git package at the release tag, then invoke `/skill:code-flow-map`.
 
 ```sh
 pi install git:github.com/CaiusLuo/code-flow-map@v0.1.0
 ```
 
-[Pi 包与安装文档](https://github.com/earendil-works/pi/blob/main/packages/coding-agent/docs/packages.md)
+[Pi packages](https://github.com/earendil-works/pi/blob/main/packages/coding-agent/docs/packages.md)
 
 ### Magpie
 
-1. 打开 **Library → Skills**，从 GitHub 添加 `CaiusLuo/code-flow-map`，选择 `code-flow-map` 和要接收它的 Agent。
-2. 如果已启用 Skill Router，运行下面的命令让这一项进入 `magpie-skills` 目录。采用直装时，可用接收方 Agent 自己的技能调用方式。
+1. In **Library → Skills**, add `CaiusLuo/code-flow-map` from GitHub. Pick `code-flow-map` and the agents that should receive it.
+2. If the Skill Router is enabled, use the command below to list it in `magpie-skills`. With direct installation, use the receiving agent's own invocation.
 
 ```sh
 magpie library skill router code-flow-map routed
 ```
 
-如果需要开启库级 Skill Router，可以运行 `magpie library skill router on`。这个开关作用于整个 Library，具体是否调用某项技能仍由接收技能的 Agent 决定。 [Magpie Library 文档](https://usemagpie.ai/docs/library#skills)
+Run `magpie library skill router on` to enable the router for the whole Library. Each receiving agent decides when to invoke a skill. [Magpie Library](https://usemagpie.ai/docs/library#skills)
 
-## 本地跑一个示例
+## Run the example locally
 
-从仓库根目录执行。示例是一个自建任务队列，包含首次成功和失败后重试两条路径。
+Run this from the repository root. The example uses a small job queue with a success path and a retry path.
 
 ```sh
 python3 skills/code-flow-map/scripts/render.py \
@@ -64,10 +72,10 @@ python3 skills/code-flow-map/scripts/render.py \
   --out task-queue.html
 ```
 
-在浏览器打开 `task-queue.html`。需要手工调整节点或分支时，可以先改 [示例清单](examples/task-queue/flow.json)，再重新生成。字段见 [清单格式](skills/code-flow-map/references/manifest.md)。
+Open `task-queue.html` in a browser. To adjust the nodes or branches, edit the [example manifest](examples/task-queue/flow.json) and render it again. The [manifest reference](skills/code-flow-map/references/manifest.md) describes its fields.
 
-HTML 会嵌入被引用文件的全文。分享生成的页面前，检查这些文件是否适合公开。
+The HTML embeds the full text of the referenced source files. Check those files before sharing a generated page.
 
-## 许可证
+## License
 
 [MIT](LICENSE)
