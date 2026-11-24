@@ -1,10 +1,26 @@
 # Code Flow Map
 
-**English** · [简体中文](README.zh-CN.md)
+**English** · [简体中文](README.zh-CN.md) · [Read the skill](skills/code-flow-map/SKILL.md)
 
-Trace a repository workflow in an offline HTML page with source code on the left and the execution flow on the right. Click a node to jump to its source lines, or click a marked line number to find its node.
+Turn a workflow from a public GitHub repository or a local directory into one offline HTML walkthrough. The source and execution flow stay linked as you read.
 
-![Code Flow Map cover showing source code linked to execution nodes](docs/images/cover.png)
+![Code Flow Map cover showing the retry branch alongside its source](docs/images/cover.png)
+
+## Quick start
+
+Give `code-flow-map` a public GitHub repository URL or a local repository path, and name the workflow you want to trace. A GitHub URL works without a local checkout. You can also specify a branch, tag, or commit.
+
+> Use `code-flow-map` with `https://github.com/CaiusLuo/code-flow-map`. Trace `examples/task-queue` from claim to completion, including what happens after a failure. Give me an HTML file I can open offline.
+
+To use your local copy, replace the URL with its directory, such as `/path/to/code-flow-map`.
+
+**Flow → source.** Click **Requeue on failure** to jump to `worker.ts` lines 17–21. The GitHub badge opens the exact source commit.
+
+![GitHub input with the retry node and its source lines highlighted](docs/images/github-url.png)
+
+**Source → flow.** Click the marked line that calls `save` to highlight **Save the result**. Use **Play** or the step controls to follow the selected path.
+
+![Local input with the save call and its matching flow node highlighted](docs/images/local-repository.png)
 
 ## Demo
 
@@ -12,19 +28,9 @@ https://github.com/user-attachments/assets/fa17df5e-d21b-488a-b96a-a99b4205e0a4
 
 *36-second walkthrough with Chinese captions, from source navigation to replaying a retry path.*
 
-[Download the offline example](https://github.com/CaiusLuo/code-flow-map/releases/download/v0.1.0/task-queue.html)
-
-## Quick start
-
-Invoke `code-flow-map` in the project you want to understand. In your prompt, name the workflow and any branch you want to trace.
-
-> Trace a job from claim to completion. Show what happens when processing fails and the job is retried. Give me an HTML map I can open offline.
-
-Use playback or single-step controls to follow the main path and its branches. For Git projects, Code Flow Map reads local HEAD by default and records the source commit in the HTML. The file includes the full text of each referenced source file.
-
 ## Install
 
-Rendering requires Python 3.9 or newer. Reading source from a commit requires Git. [Read the skill on GitHub](skills/code-flow-map/SKILL.md) or download the [v0.1.0 skill ZIP](https://github.com/CaiusLuo/code-flow-map/releases/download/v0.1.0/code-flow-map-skill-v0.1.0.zip) for manual installation.
+Rendering requires Python 3.9 or newer. Git is used to resolve branches and tags and read local commits. The HTML includes the full text of the source files it references.
 
 ### Codex and Claude Code
 
@@ -42,10 +48,10 @@ Put the full `code-flow-map` directory under `.agents/skills/` or `.dsh/skills/`
 
 ### Pi
 
-Install the Git package at the release tag, then invoke `/skill:code-flow-map`.
+Install the Git package, then invoke `/skill:code-flow-map`.
 
 ```sh
-pi install git:github.com/CaiusLuo/code-flow-map@v0.1.0
+pi install git:github.com/CaiusLuo/code-flow-map@main
 ```
 
 [Pi packages](https://github.com/earendil-works/pi/blob/main/packages/coding-agent/docs/packages.md)

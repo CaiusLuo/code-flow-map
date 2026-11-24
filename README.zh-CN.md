@@ -1,10 +1,26 @@
 # Code Flow Map
 
-[English](README.md) · **简体中文**
+[English](README.md) · **简体中文** · [阅读 Skill](skills/code-flow-map/SKILL.md)
 
-在一个离线 HTML 页面里读懂仓库的一条执行流程。左侧看源码，右侧看流程。点击节点跳到对应的代码行，点击带圆点的行号回到节点。
+给出公开 GitHub 仓库或本地目录，把一条执行流程做成可离线打开的 HTML。左侧读源码，右侧看流程，两边可以互相定位。
 
-![Code Flow Map 封面，左侧源码与右侧流程节点双向对应](docs/images/cover.png)
+![Code Flow Map 封面，展示失败重试分支和对应源码](docs/images/cover.png)
+
+## 快速开始
+
+把公开 GitHub 仓库链接或本地仓库路径交给 `code-flow-map`，再说明你想追踪哪条流程。直接给 GitHub 链接就可以，无需在本地克隆。也可以指定分支、标签或提交。
+
+> 用 `code-flow-map` 看 `https://github.com/CaiusLuo/code-flow-map` 里的 `examples/task-queue`。梳理任务从领取到完成的流程，带上失败重试分支，生成一个能离线打开的 HTML。
+
+如果你已经有本地副本，把链接换成目录即可，例如 `/path/to/code-flow-map`。
+
+**流程 → 源码。** 点击「失败后重新入队」，左侧跳到 `worker.ts` 第 17–21 行。点击 GitHub 提交号可打开对应版本。
+
+![从 GitHub 链接生成，重试节点和对应代码行同时高亮](docs/images/github-url.png)
+
+**源码 → 流程。** 点击调用 `save` 的带圆点行号，右侧高亮「保存结果」。可以播放或单步跟读选中的路径。
+
+![从本地目录生成，保存结果的代码行和对应节点同时高亮](docs/images/local-repository.png)
 
 ## 演示
 
@@ -12,19 +28,9 @@ https://github.com/user-attachments/assets/fa17df5e-d21b-488a-b96a-a99b4205e0a4
 
 *36 秒使用演示，从源码定位到重试路径播放。*
 
-[下载离线示例](https://github.com/CaiusLuo/code-flow-map/releases/download/v0.1.0/task-queue.html)
-
-## 最小用法
-
-在要阅读的项目里调用 `code-flow-map`，指定要追踪的流程，带上你关心的分支。
-
-> 梳理任务从领取到完成的流程，展示处理失败后的重试过程。生成一个能离线打开的 HTML 流程图。
-
-用播放或单步按钮按顺序跟读主线和分支。对于 Git 项目，Code Flow Map 默认读取本地 HEAD，并在 HTML 里标明提交号。HTML 包含被引用的源码文件全文。
-
 ## 安装
 
-生成 HTML 需要 Python 3.9 或更新版本。从提交读取源码需要 Git。可以[直接在 GitHub 阅读 Skill](skills/code-flow-map/SKILL.md)，也可以下载 [v0.1.0 Skill ZIP](https://github.com/CaiusLuo/code-flow-map/releases/download/v0.1.0/code-flow-map-skill-v0.1.0.zip) 手动安装。
+生成 HTML 需要 Python 3.9 或更新版本。解析分支、标签或读取本地提交需要 Git。HTML 包含所引用源码文件的全文。
 
 ### Codex 和 Claude Code
 
@@ -42,10 +48,10 @@ npx skills add CaiusLuo/code-flow-map --skill code-flow-map --agent codex claude
 
 ### Pi
 
-用 Pi 的 Git 包安装，固定到首版。安装后在 Pi 输入 `/skill:code-flow-map`。
+用 Pi 的 Git 包安装，再输入 `/skill:code-flow-map`。
 
 ```sh
-pi install git:github.com/CaiusLuo/code-flow-map@v0.1.0
+pi install git:github.com/CaiusLuo/code-flow-map@main
 ```
 
 [Pi 包与安装文档](https://github.com/earendil-works/pi/blob/main/packages/coding-agent/docs/packages.md)
