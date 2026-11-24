@@ -12,6 +12,8 @@ from urllib.error import HTTPError
 from urllib.parse import quote, urlsplit
 from urllib.request import urlopen
 
+from library import save_map
+
 
 TEMPLATE = Path(__file__).resolve().parents[1] / "assets" / "viewer.html"
 
@@ -130,7 +132,7 @@ def place_nodes(nodes, paths):
     return sorted(nodes.values(), key=lambda node: (node["row"], node["column"])), edges
 
 
-def load_snapshot(manifest, repo, revision, output):
+def load_snapshot(manifest, repo, revision):
     nodes = {}
     files = {}
     occupied = {}
@@ -142,8 +144,6 @@ def load_snapshot(manifest, repo, revision, output):
         for ref in node["refs"]:
             filename = text(ref["file"], f"{name} source file")
             if filename not in files:
-                if isinstance(repo, Path):
-                    require(output != (repo / filename).resolve(), f"Output would overwrite {filename}")
                 source = read_source(repo, revision, filename)
                 require("\x00" not in source, f"{filename} is not a text source file")
                 lines = source.replace("\r\n", "\n").replace("\r", "\n").removesuffix("\n").split("\n")
@@ -172,26 +172,33 @@ def load_snapshot(manifest, repo, revision, output):
     rendered_nodes, edges = place_nodes(nodes, paths)
     language = manifest.get("language", "en")
     require(language in ("en", "zh"), "Language must be en or zh")
+    focus = manifest.get("focus")
+    require(focus is None or (isinstance(focus, str) and focus in nodes), "Focus must name a flow node")
     return {
         "project": text(manifest["project"], "Project"), "title": text(manifest["title"], "Title"),
         "language": language, "revision": revision, "files": files,
         "repository": repo if isinstance(repo, str) else None,
-        "nodes": rendered_nodes, "routes": paths, "edges": edges,
+        "nodes": rendered_nodes, "routes": paths, "edges": edges, "focus": focus,
     }
+
+
+def render_html(snapshot):
+    metadata = {key: snapshot[key] for key in ("project", "title", "repository", "revision")}
+    document = TEMPLATE.read_text(encoding="utf-8")
+    payload = json.dumps(snapshot, ensure_ascii=False, separators=(",", ":")).replace("<", "\\u003c")
+    header = json.dumps(metadata, ensure_ascii=False, separators=(",", ":")).replace("<", "\\u003c")
+    return document.replace("__SNAPSHOT__", payload, 1).replace("__MAP_METADATA__", header, 1)
 
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--repo", required=True, help="Source directory or public GitHub repository URL")
     parser.add_argument("--ref", help="Branch, tag, or commit (GitHub defaults to HEAD)")
-    parser.add_argument("--manifest", type=Path, required=True, help="Flow manifest JSON")
-    parser.add_argument("--out", type=Path, required=True, help="Standalone HTML file")
+    parser.add_argument("--manifest", type=Path, required=True, help="Flow manifest JSON file, or - for stdin")
     args = parser.parse_args()
 
     try:
-        output = args.out.resolve()
-        require(output.suffix.lower() == ".html", "Output must have an .html extension")
-        manifest = json.loads(args.manifest.read_text(encoding="utf-8"))
+        manifest = json.load(sys.stdin) if args.manifest == Path("-") else json.loads(args.manifest.read_text(encoding="utf-8"))
         repository = github_repository(args.repo)
         if repository:
             repo = repository
@@ -199,9 +206,8 @@ def main():
         else:
             repo = Path(args.repo).resolve(strict=True)
             revision = git(repo, "rev-parse", "--verify", "--end-of-options", args.ref + "^{commit}").strip() if args.ref else None
-        snapshot = load_snapshot(manifest, repo, revision, output)
-        payload = json.dumps(snapshot, ensure_ascii=False, separators=(",", ":")).replace("<", "\\u003c")
-        output.write_text(TEMPLATE.read_text(encoding="utf-8").replace("__SNAPSHOT__", payload, 1), encoding="utf-8")
+        snapshot = load_snapshot(manifest, repo, revision)
+        output = save_map(snapshot["project"], snapshot["title"], render_html(snapshot))
     except subprocess.CalledProcessError as error:
         parser.exit(2, error.stderr.decode("utf-8", errors="replace"))
     except (KeyError, TypeError, ValueError, OSError, subprocess.TimeoutExpired) as error:

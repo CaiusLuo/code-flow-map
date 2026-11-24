@@ -2,17 +2,19 @@
 
 **English** · [简体中文](README.zh-CN.md) · [Read the skill](skills/code-flow-map/SKILL.md)
 
-Turn a workflow from a public GitHub repository or a local directory into one offline HTML walkthrough. The source and execution flow stay linked as you read.
+Learn how a project works, one code path at a time. Give the skill a public GitHub repository or a local directory and get one interactive HTML walkthrough that links flow steps to source lines.
+
+**[Open the interactive demo](https://caiusluo.github.io/code-flow-map/demo/)**. The retry branch opens with its source already highlighted.
 
 ![Code Flow Map cover showing the retry branch alongside its source](docs/images/cover.png)
 
 ## Quick start
 
-Give `code-flow-map` a public GitHub repository URL or a local repository path, and name the workflow you want to trace. A GitHub URL works without a local checkout. You can also specify a branch, tag, or commit.
+After installing the skill, ask it a question about the path you want to understand.
 
-> Use `code-flow-map` with `https://github.com/CaiusLuo/code-flow-map`. Trace `examples/task-queue` from claim to completion, including what happens after a failure. Give me an HTML file I can open offline.
+> Use Code Flow Map with `https://github.com/CaiusLuo/code-flow-map`. What happens when a job fails in `examples/task-queue`? Show me where it retries and where it stops.
 
-To use your local copy, replace the URL with its directory, such as `/path/to/code-flow-map`.
+A public GitHub URL works without a local checkout. You can also give a local directory or specify a branch, tag, or commit. Open the generated HTML directly in a browser.
 
 **Flow → source.** Click **Requeue on failure** to jump to `worker.ts` lines 17–21. The GitHub badge opens the exact source commit.
 
@@ -22,7 +24,7 @@ To use your local copy, replace the URL with its directory, such as `/path/to/co
 
 ![Local input with the save call and its matching flow node highlighted](docs/images/local-repository.png)
 
-## Demo
+## Video walkthrough
 
 https://github.com/user-attachments/assets/fa17df5e-d21b-488a-b96a-a99b4205e0a4
 
@@ -67,6 +69,13 @@ magpie library skill router code-flow-map routed
 
 Run `magpie library skill router on` to enable the router for the whole Library. Each receiving agent decides when to invoke a skill. [Magpie Library](https://usemagpie.ai/docs/library#skills)
 
+## Saved walkthroughs
+
+The skill stores walkthroughs in `~/code-flow-map`. Manage them from chat.
+
+- “List my saved Code Flow Maps” returns a table with links to open each walkthrough.
+- “Delete the AOF walkthrough” moves the matching HTML to `~/code-flow-map/.trash`. To restore it, move the file back into `~/code-flow-map`.
+
 ## Run the example locally
 
 The sample job queue demonstrates a successful run and a retry after failure. Run the renderer from the repository root.
@@ -74,11 +83,10 @@ The sample job queue demonstrates a successful run and a retry after failure. Ru
 ```sh
 python3 skills/code-flow-map/scripts/render.py \
   --repo examples/task-queue \
-  --manifest examples/task-queue/flow.json \
-  --out task-queue.html
+  --manifest examples/task-queue/flow.json
 ```
 
-Open `task-queue.html` in a browser. To change a node or add a path, edit the [example manifest](examples/task-queue/flow.json) and render it again. [Manifest fields](skills/code-flow-map/references/manifest.md)
+Open the HTML path printed by the renderer. To change a node or add a path, edit the [example manifest](examples/task-queue/flow.json) and render it again. [Manifest fields](skills/code-flow-map/references/manifest.md)
 
 ## License
 

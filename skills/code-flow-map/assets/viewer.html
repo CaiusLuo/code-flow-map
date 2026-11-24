@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Code Flow Map</title>
+<script id="map-metadata" type="application/json">__MAP_METADATA__</script>
 <style>
   :root {
     color-scheme: light dark;
@@ -231,11 +232,12 @@ byId('workflow-title').textContent = snapshot.title;
 for (const element of document.querySelectorAll('[data-text]')) element.textContent = labels[element.dataset.text];
 for (const element of document.querySelectorAll('[data-label]')) element.setAttribute('aria-label', labels[element.dataset.label]);
 
+const initialRoute = Math.max(0, routes.findIndex(route => route.steps.includes(snapshot.focus)));
 const routeButtons = routes.map((route, index) => {
   const button = document.createElement('button');
   button.type = 'button';
   button.textContent = route.name;
-  button.setAttribute('aria-pressed', String(index === 0));
+  button.setAttribute('aria-pressed', String(index === initialRoute));
   byId('scenarios').append(button);
   return button;
 });
@@ -257,8 +259,8 @@ const previous = byId('previous');
 const next = byId('next');
 const play = byId('play');
 
-let routeIndex = 0;
-let cursor = 0;
+let routeIndex = initialRoute;
+let cursor = Math.max(0, activeRoute().indexOf(snapshot.focus));
 let activeNode;
 let activeRef;
 let activeLine;
@@ -557,7 +559,7 @@ function drawEdges() {
 
 new ResizeObserver(scheduleEdges).observe(graph);
 darkMode.addEventListener('change', scheduleEdges);
-renderSelection(nodeById.get(activeRoute()[0]));
+renderSelection(nodeById.get(activeRoute()[cursor]));
 </script>
 </body>
 </html>

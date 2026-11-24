@@ -1,16 +1,17 @@
 {
-  "project": "示例任务队列",
-  "title": "一次任务如何完成",
-  "language": "zh",
+  "project": "Task queue",
+  "title": "What happens when a job fails?",
+  "language": "en",
+  "focus": "retry",
   "nodes": [
-    {"id":"claim","title":"领取任务","symbol":"queue.claim()","description":"取出队首任务。队列为空时，这次执行直接返回。","refs":[{"file":"src/queue.ts","lines":[11,13],"label":"从队列取出任务"},{"file":"src/worker.ts","lines":[11,12],"label":"检查队列是否为空"}]},
-    {"id":"run","title":"执行处理器","symbol":"handle(job.payload)","description":"把任务内容交给异步处理器，等待结果。","refs":[{"file":"src/worker.ts","lines":[14,16],"label":"调用处理器"}]},
-    {"id":"retry","title":"失败后重新入队","symbol":"queue.requeue(job)","description":"处理器失败且仍可重试时，累计尝试次数并把任务放回队尾。演示队列只有这一项，下次调用 runNext 会再次领取。","refs":[{"file":"src/worker.ts","lines":[17,21],"label":"判断是否重试"},{"file":"src/queue.ts","lines":[15,20],"label":"追加到队尾"}]},
-    {"id":"save","title":"保存结果","symbol":"save(job.id, result)","description":"处理成功后，等待结果写入完成。","refs":[{"file":"src/worker.ts","lines":[23,23],"label":"持久化结果"}]},
-    {"id":"ack","title":"确认任务","symbol":"queue.acknowledge(job)","description":"保存成功后，把任务 ID 记入已完成集合。","refs":[{"file":"src/queue.ts","lines":[22,24],"label":"确认任务"},{"file":"src/worker.ts","lines":[24,24],"label":"调用确认函数"}]}
+    {"id": "claim", "title": "Claim the job", "symbol": "queue.claim()", "description": "Take the next job from the queue. An empty queue ends the run.", "refs": [{"file": "src/queue.ts", "lines": [11, 13], "label": "Take the next job"}, {"file": "src/worker.ts", "lines": [11, 12], "label": "Check for an empty queue"}]},
+    {"id": "run", "title": "Run the handler", "symbol": "handle(job.payload)", "description": "Pass the job payload to the handler and wait for its result.", "refs": [{"file": "src/worker.ts", "lines": [14, 16], "label": "Call the handler"}]},
+    {"id": "retry", "title": "Requeue on failure", "symbol": "queue.requeue(job)", "description": "If attempts remain, requeue the job. When the attempt limit is reached, rethrow the error.", "refs": [{"file": "src/worker.ts", "lines": [17, 21], "label": "Check retry limit"}, {"file": "src/queue.ts", "lines": [15, 20], "label": "Append to queue"}]},
+    {"id": "save", "title": "Save the result", "symbol": "save(job.id, result)", "description": "Wait for the result to be written before acknowledging the job.", "refs": [{"file": "src/worker.ts", "lines": [23, 23], "label": "Write the result"}]},
+    {"id": "ack", "title": "Acknowledge the job", "symbol": "queue.acknowledge(job)", "description": "Record the saved job ID in the completed set.", "refs": [{"file": "src/queue.ts", "lines": [22, 24], "label": "Record the job ID"}, {"file": "src/worker.ts", "lines": [24, 24], "label": "Acknowledge the saved job"}]}
   ],
   "paths": [
-    {"name":"首次成功","steps":["claim","run","save","ack"]},
-    {"name":"失败后重试","steps":["claim","run","retry","claim","run","save","ack"]}
+    {"name": "Success", "steps": ["claim", "run", "save", "ack"]},
+    {"name": "Retry after failure", "steps": ["claim", "run", "retry", "claim", "run", "save", "ack"]}
   ]
 }
