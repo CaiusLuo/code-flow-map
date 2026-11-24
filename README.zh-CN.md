@@ -2,9 +2,9 @@
 
 [English](README.md) · **简体中文**
 
-![Code Flow Map 封面，左侧源码与右侧流程节点双向对应](docs/images/cover.png)
+在一个离线 HTML 页面里读懂仓库的一条执行流程。左侧看源码，右侧看流程。点击节点跳到对应的代码行，点击带圆点的行号回到节点。
 
-给定一个仓库和一个想弄懂的流程，生成一页可交互的离线 HTML。左侧读源码，右侧看执行流程。点击流程节点跳到对应行，点击带圆点的行号可以回到节点。
+![Code Flow Map 封面，左侧源码与右侧流程节点双向对应](docs/images/cover.png)
 
 ## 演示
 
@@ -16,15 +16,15 @@ https://github.com/user-attachments/assets/fa17df5e-d21b-488a-b96a-a99b4205e0a4
 
 ## 最小用法
 
-在要阅读的项目里启动 Agent，调用 `code-flow-map` 并说明想看的流程。例如：
+在要阅读的项目里调用 `code-flow-map`，指定要追踪的流程，带上你关心的分支。
 
-> 梳理当前仓库里任务从领取到完成的流程，带上失败重试。交付一个代码和流程图可以双向定位的离线 HTML。
+> 梳理任务从领取到完成的流程，展示处理失败后的重试过程。生成一个能离线打开的 HTML 流程图。
 
-Agent 从真实入口读一条执行主线，补上能解释关键判断的分支，再核对每个节点对应的文件和行号。渲染器根据清单生成页面。Git 项目默认读取本地 HEAD，页面带有提交号。播放按源码中整理出的路径逐步定位。
+用播放或单步按钮按顺序跟读主线和分支。对于 Git 项目，Code Flow Map 默认读取本地 HEAD，并在 HTML 里标明提交号。HTML 包含被引用的源码文件全文。
 
 ## 安装
 
-下面几种安装方式共用同一个 [Skill 目录](skills/code-flow-map)。手动安装可以下载 [首版 Skill ZIP](https://github.com/CaiusLuo/code-flow-map/releases/download/v0.1.0/code-flow-map-skill-v0.1.0.zip)。生成 HTML 需要 Python 3.9 或更新版本。读取 Git 提交时需要 Git。
+生成 HTML 需要 Python 3.9 或更新版本。从提交读取源码需要 Git。可以[直接在 GitHub 阅读 Skill](skills/code-flow-map/SKILL.md)，也可以下载 [v0.1.0 Skill ZIP](https://github.com/CaiusLuo/code-flow-map/releases/download/v0.1.0/code-flow-map-skill-v0.1.0.zip) 手动安装。
 
 ### Codex 和 Claude Code
 
@@ -63,7 +63,7 @@ magpie library skill router code-flow-map routed
 
 ## 本地跑一个示例
 
-从仓库根目录执行。示例是一个自建任务队列，包含首次成功和失败后重试两条路径。
+示例任务队列演示首次成功和失败重试两条路径。在仓库根目录运行渲染命令。
 
 ```sh
 python3 skills/code-flow-map/scripts/render.py \
@@ -72,9 +72,7 @@ python3 skills/code-flow-map/scripts/render.py \
   --out task-queue.html
 ```
 
-在浏览器打开 `task-queue.html`。需要手工调整节点或分支时，可以先改 [示例清单](examples/task-queue/flow.json)，再重新生成。字段见 [清单格式](skills/code-flow-map/references/manifest.md)。
-
-HTML 会嵌入被引用文件的全文。分享生成的页面前，检查这些文件是否适合公开。
+在浏览器打开 `task-queue.html`。要调整节点或新增路径，修改 [示例清单](examples/task-queue/flow.json) 后重新生成。 [清单字段说明](skills/code-flow-map/references/manifest.md)
 
 ## 许可证
 

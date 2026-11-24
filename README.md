@@ -2,9 +2,9 @@
 
 **English** · [简体中文](README.zh-CN.md)
 
-![Code Flow Map cover showing source code linked to execution nodes](docs/images/cover.png)
+Trace a repository workflow in an offline HTML page with source code on the left and the execution flow on the right. Click a node to jump to its source lines, or click a marked line number to find its node.
 
-Turn one repository workflow into an interactive, offline HTML walkthrough. Read the source on the left and follow the execution flow on the right. Select a node to jump to its source, or select a marked line number to jump back to the node.
+![Code Flow Map cover showing source code linked to execution nodes](docs/images/cover.png)
 
 ## Demo
 
@@ -16,15 +16,15 @@ https://github.com/user-attachments/assets/fa17df5e-d21b-488a-b96a-a99b4205e0a4
 
 ## Quick start
 
-Open the project you want to understand, invoke `code-flow-map` in your agent, and describe the workflow. For example, ask:
+Invoke `code-flow-map` in the project you want to understand. In your prompt, name the workflow and any branch you want to trace.
 
-> Trace how a job goes from claim to completion, including retry after failure. Give me an offline HTML page where I can jump between the flow and the source.
+> Trace a job from claim to completion. Show what happens when processing fails and the job is retried. Give me an HTML map I can open offline.
 
-The agent reads the entry point, follows the main path and its relevant branches, then checks the file and line range for each node. The renderer turns that map into one HTML file. For Git projects, the skill reads local HEAD by default and includes the commit in the output. Playback follows the paths mapped from the source.
+Use playback or single-step controls to follow the main path and its branches. For Git projects, Code Flow Map reads local HEAD by default and records the source commit in the HTML. The file includes the full text of each referenced source file.
 
 ## Install
 
-Every agent uses the same [skill directory](skills/code-flow-map). For a manual install, download the [v0.1.0 skill ZIP](https://github.com/CaiusLuo/code-flow-map/releases/download/v0.1.0/code-flow-map-skill-v0.1.0.zip). Rendering requires Python 3.9 or newer. Reading a commit also requires Git.
+Rendering requires Python 3.9 or newer. Reading source from a commit requires Git. [Read the skill on GitHub](skills/code-flow-map/SKILL.md) or download the [v0.1.0 skill ZIP](https://github.com/CaiusLuo/code-flow-map/releases/download/v0.1.0/code-flow-map-skill-v0.1.0.zip) for manual installation.
 
 ### Codex and Claude Code
 
@@ -63,7 +63,7 @@ Run `magpie library skill router on` to enable the router for the whole Library.
 
 ## Run the example locally
 
-Run this from the repository root. The example uses a small job queue with a success path and a retry path.
+The sample job queue demonstrates a successful run and a retry after failure. Run the renderer from the repository root.
 
 ```sh
 python3 skills/code-flow-map/scripts/render.py \
@@ -72,9 +72,7 @@ python3 skills/code-flow-map/scripts/render.py \
   --out task-queue.html
 ```
 
-Open `task-queue.html` in a browser. To adjust the nodes or branches, edit the [example manifest](examples/task-queue/flow.json) and render it again. The [manifest reference](skills/code-flow-map/references/manifest.md) describes its fields.
-
-The HTML embeds the full text of the referenced source files. Check those files before sharing a generated page.
+Open `task-queue.html` in a browser. To change a node or add a path, edit the [example manifest](examples/task-queue/flow.json) and render it again. [Manifest fields](skills/code-flow-map/references/manifest.md)
 
 ## License
 
