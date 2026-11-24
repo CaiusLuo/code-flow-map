@@ -53,7 +53,8 @@
   .brand-mark { inline-size: 1.55rem; aspect-ratio: 1; display: grid; place-content: center; border: 1px solid var(--divider); border-radius: .45rem; background: var(--surface); }
   .brand-mark::before { content: ""; inline-size: .62rem; block-size: .62rem; border: 1px solid var(--muted); border-radius: .12rem; box-shadow: .15rem .15rem 0 -.035rem var(--surface), .15rem .15rem 0 0 var(--muted); transform: translate(-.075rem, -.075rem); }
   .revision { display: flex; align-items: center; gap: .55rem; color: var(--muted); font-size: .75rem; white-space: nowrap; }
-  .revision span { font-family: var(--mono); text-decoration: none; color: inherit; padding: .18rem .42rem; border: 1px solid var(--divider); border-radius: .35rem; }
+  .revision :is(span, a) { font-family: var(--mono); text-decoration: none; color: inherit; padding: .18rem .42rem; border: 1px solid var(--divider); border-radius: .35rem; }
+  .revision a:hover { color: var(--accent); }
   .page { padding-block: clamp(1.35rem, 4.6vh, 3rem) 1.25rem; }
   .intro { display: flex; flex-wrap: wrap; align-items: end; justify-content: space-between; gap: 1rem; margin-block-end: 1.3rem; }
   .intro h1 { margin: 0; font-size: clamp(1.75rem, 1.25rem + 1.6vw, 2.55rem); font-weight: 690; line-height: 1.22; letter-spacing: -.045em; }
@@ -149,7 +150,7 @@
 <header class="app-bar">
   <div class="wrap">
     <div class="brand"><span class="brand-mark" aria-hidden="true"></span><span id="project"></span></div>
-    <div class="revision"><span id="revision"></span></div>
+    <div class="revision" id="revision-slot"></div>
   </div>
 </header>
 <main class="page wrap">
@@ -267,9 +268,16 @@ let timer = null;
 let traversed = false;
 let frame = 0;
 
-const revisionLabel = byId('revision');
-revisionLabel.textContent = snapshot.revision?.slice(0, 10) ?? labels.working;
+const revisionLabel = document.createElement(snapshot.repository ? 'a' : 'span');
+revisionLabel.id = 'revision';
+const shortRevision = snapshot.revision?.slice(0, 10);
+revisionLabel.textContent = shortRevision ?? labels.working;
 if (snapshot.revision) revisionLabel.title = snapshot.revision;
+if (snapshot.repository) {
+  revisionLabel.href = 'https://github.com/' + snapshot.repository + '/commit/' + snapshot.revision;
+  revisionLabel.textContent = 'GitHub · ' + shortRevision;
+}
+byId('revision-slot').append(revisionLabel);
 
 for (const [name, file] of Object.entries(files)) {
   sourceSelect.add(new Option(file.path.split('/').at(-1), name));

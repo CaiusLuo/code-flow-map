@@ -3,10 +3,14 @@
 
 import argparse
 import json
+import os
 from pathlib import Path, PurePosixPath
 import re
 import subprocess
 import sys
+from urllib.error import HTTPError
+from urllib.parse import quote, urlsplit
+from urllib.request import urlopen
 
 
 TEMPLATE = Path(__file__).resolve().parents[1] / "assets" / "viewer.html"
@@ -25,7 +29,41 @@ def text(value, where):
 def git(repo, *args):
     return subprocess.run(
         ["git", "-C", str(repo), *args], check=True, capture_output=True,
+        env={**os.environ, "GIT_TERMINAL_PROMPT": "0"}, timeout=30,
     ).stdout.decode("utf-8")
+
+
+def github_repository(value):
+    if "://" not in value:
+        return None
+    url = urlsplit(value)
+    repository = url.path.strip("/").removesuffix(".git")
+    require(
+        url.scheme == "https" and url.netloc.lower() == "github.com" and not (url.query or url.fragment)
+        and re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9-]*/[A-Za-z0-9_.-]+", repository)
+        and repository.split("/")[1] not in (".", ".."),
+        "Use a local directory or a public GitHub repository URL such as https://github.com/owner/repo",
+    )
+    return repository
+
+
+def github_commit(repository, ref):
+    if ref and re.fullmatch(r"[0-9a-fA-F]{40}", ref):
+        return ref.lower()
+    if ref is None or ref == "HEAD":
+        names = ["HEAD"]
+    elif ref.startswith("refs/tags/"):
+        names = [ref + "^{}", ref]
+    elif ref.startswith("refs/"):
+        names = [ref]
+    else:
+        names = [f"refs/heads/{ref}", f"refs/tags/{ref}^{{}}", f"refs/tags/{ref}"]
+
+    rows = git(Path.cwd(), "ls-remote", "--", f"https://github.com/{repository}.git", *names)
+    remote_refs = {name: sha for sha, name in (line.split("\t", 1) for line in rows.splitlines())}
+    revision = next((remote_refs[name] for name in names if name in remote_refs), "")
+    require(re.fullmatch(r"[0-9a-f]{40}", revision), f"GitHub ref not found in {repository}: {ref or 'HEAD'}")
+    return revision
 
 
 def read_source(repo, revision, name):
@@ -35,6 +73,13 @@ def read_source(repo, revision, name):
         and "\\" not in name and name == path.as_posix(),
         f"Expected a repository-relative file path, got {name!r}",
     )
+    if isinstance(repo, str):
+        url = f"https://raw.githubusercontent.com/{repo}/{revision}/{quote(name)}"
+        try:
+            with urlopen(url, timeout=15) as response:
+                return response.read().decode("utf-8")
+        except HTTPError as error:
+            raise ValueError(f"GitHub returned HTTP {error.code} for {repo}/{name} at {revision}") from error
     if revision:
         return git(repo, "cat-file", "blob", revision + ":" + name)
     source = (repo / name).resolve()
@@ -97,7 +142,8 @@ def load_snapshot(manifest, repo, revision, output):
         for ref in node["refs"]:
             filename = text(ref["file"], f"{name} source file")
             if filename not in files:
-                require(output != (repo / filename).resolve(), f"Output would overwrite {filename}")
+                if isinstance(repo, Path):
+                    require(output != (repo / filename).resolve(), f"Output would overwrite {filename}")
                 source = read_source(repo, revision, filename)
                 require("\x00" not in source, f"{filename} is not a text source file")
                 lines = source.replace("\r\n", "\n").replace("\r", "\n").removesuffix("\n").split("\n")
@@ -129,30 +175,36 @@ def load_snapshot(manifest, repo, revision, output):
     return {
         "project": text(manifest["project"], "Project"), "title": text(manifest["title"], "Title"),
         "language": language, "revision": revision, "files": files,
+        "repository": repo if isinstance(repo, str) else None,
         "nodes": rendered_nodes, "routes": paths, "edges": edges,
     }
 
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--repo", type=Path, required=True, help="Source directory or Git repository")
-    parser.add_argument("--ref", help="Read source from this Git ref instead of the working files")
+    parser.add_argument("--repo", required=True, help="Source directory or public GitHub repository URL")
+    parser.add_argument("--ref", help="Branch, tag, or commit (GitHub defaults to HEAD)")
     parser.add_argument("--manifest", type=Path, required=True, help="Flow manifest JSON")
     parser.add_argument("--out", type=Path, required=True, help="Standalone HTML file")
     args = parser.parse_args()
 
     try:
-        repo = args.repo.resolve(strict=True)
         output = args.out.resolve()
         require(output.suffix.lower() == ".html", "Output must have an .html extension")
-        revision = git(repo, "rev-parse", "--verify", "--end-of-options", args.ref + "^{commit}").strip() if args.ref else None
         manifest = json.loads(args.manifest.read_text(encoding="utf-8"))
+        repository = github_repository(args.repo)
+        if repository:
+            repo = repository
+            revision = github_commit(repository, args.ref)
+        else:
+            repo = Path(args.repo).resolve(strict=True)
+            revision = git(repo, "rev-parse", "--verify", "--end-of-options", args.ref + "^{commit}").strip() if args.ref else None
         snapshot = load_snapshot(manifest, repo, revision, output)
         payload = json.dumps(snapshot, ensure_ascii=False, separators=(",", ":")).replace("<", "\\u003c")
         output.write_text(TEMPLATE.read_text(encoding="utf-8").replace("__SNAPSHOT__", payload, 1), encoding="utf-8")
     except subprocess.CalledProcessError as error:
         parser.exit(2, error.stderr.decode("utf-8", errors="replace"))
-    except (KeyError, TypeError, ValueError, OSError) as error:
+    except (KeyError, TypeError, ValueError, OSError, subprocess.TimeoutExpired) as error:
         parser.exit(2, f"Could not render flow: {error}\n")
 
     print(f"{output} ({len(snapshot['nodes'])} nodes, {len(snapshot['files'])} files)")
